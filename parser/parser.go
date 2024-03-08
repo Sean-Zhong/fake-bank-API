@@ -1,4 +1,4 @@
-package main
+package parser
 
 import (
 	"encoding/json"
@@ -7,6 +7,9 @@ import (
 	"io/ioutil"
 	"os"
 )
+
+const INPUTFILENAME string = "camt053.xml"
+const OUTPUTFILENAME string = "output.json"
 
 type Statement struct {
 	//XMLName     xml.Name `xml:"statement"`
@@ -48,15 +51,15 @@ type RemitanceInformation struct {
 	} `xml:"Ustrd"`
 }
 
-func main() {
-	camt053File, err := os.Open("camt053.xml")
+func Parse() []byte {
+	camt053File, err := os.Open(INPUTFILENAME)
 	if err != nil {
 		fmt.Println(err)
-		return
+		return nil
 	}
 	defer camt053File.Close()
 
-	fmt.Println("Successfully Opened camt053.xml")
+	fmt.Println("Successfully Opened " + INPUTFILENAME)
 
 	byteValue, _ := ioutil.ReadAll(camt053File)
 	var statement Statement
@@ -65,23 +68,8 @@ func main() {
 	jsonData, err := json.Marshal(statement)
 	if err != nil {
 		fmt.Println("Error marshalling JSON:", err)
-		return
+		return nil
 	}
 
-	// Open a file for writing, create it if it doesn't exist, truncate it if it does
-	file, err := os.OpenFile("output.json", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-	if err != nil {
-		fmt.Println("Error opening file:", err)
-		return
-	}
-	defer file.Close() // Make sure to close the file when done
-
-	// Write data to the file
-	_, err = file.WriteString(string(jsonData))
-	if err != nil {
-		fmt.Println("Error writing to file:", err)
-		return
-	}
-
-	fmt.Println("Data has been written to output.json")
+	return jsonData
 }
