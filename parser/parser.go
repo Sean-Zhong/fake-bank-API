@@ -13,9 +13,9 @@ const OUTPUTFILENAME string = "output.json"
 
 type Statement struct {
 	//XMLName     xml.Name `xml:"statement"`
-	AccountInfo Account   `xml:"BkToCstmrStmt>Stmt>Acct"`
-	Balances    []Balance `xml:"BkToCstmrStmt>Stmt>Bal"`
-	Entries     []Entry   `xml:"BkToCstmrStmt>Stmt>Ntry"`
+	AccountInfo  Account   `xml:"BkToCstmrStmt>Stmt>Acct"`
+	Balances     []Balance `xml:"BkToCstmrStmt>Stmt>Bal"`
+	Transactions []Entry   `xml:"BkToCstmrStmt>Stmt>Ntry"`
 }
 
 type Account struct {
@@ -34,6 +34,11 @@ type Balance struct {
 }
 
 type Entry struct {
+	Reference string `xml:"NtryRef"`
+	Amount    struct {
+		Value    float64 `xml:",chardata"`
+		Currency string  `xml:"Ccy,attr"`
+	} `xml:"Amt"`
 	EntryDetails []RemitanceInformation `xml:"NtryDtls>TxDtls>RmtInf"`
 }
 
