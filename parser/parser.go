@@ -1,25 +1,25 @@
 package parser
 
 import (
-	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"os"
 )
 
-const INPUTFILENAME string = "camt053.xml"
-const OUTPUTFILENAME string = "output.json"
+const INPUTFILE string = "camt053.xml"
+
+type BankStatements struct {
+	Statements []Statement `xml:"BkToCstmrStmt>Stmt"`
+}
 
 type Statement struct {
-	//XMLName     xml.Name `xml:"statement"`
-	AccountInfo  Account   `xml:"BkToCstmrStmt>Stmt>Acct"`
-	Balances     []Balance `xml:"BkToCstmrStmt>Stmt>Bal"`
-	Transactions []Entry   `xml:"BkToCstmrStmt>Stmt>Ntry"`
+	AccountInfo  Account   `xml:"Acct"`
+	Balances     []Balance `xml:"Bal"`
+	Transactions []Entry   `xml:"Ntry"`
 }
 
 type Account struct {
-	//XMLName xml.Name `xml:"Acct"`
 	AccountId int    `xml:"Id>Othr>Id"`
 	Currency  string `xml:"Ccy"`
 	Owner     string `xml:"Ownr>Nm"`
@@ -56,25 +56,29 @@ type RemitanceInformation struct {
 	} `xml:"Ustrd"`
 }
 
-func Parse() []byte {
-	camt053File, err := os.Open(INPUTFILENAME)
+func readFile() []byte {
+	camt053File, err := os.Open(INPUTFILE)
+
 	if err != nil {
 		fmt.Println(err)
 		return nil
 	}
 	defer camt053File.Close()
 
-	fmt.Println("Successfully Opened " + INPUTFILENAME)
+	fmt.Println("Successfully Opened " + INPUTFILE)
 
 	byteValue, _ := ioutil.ReadAll(camt053File)
-	var statement Statement
-	xml.Unmarshal(byteValue, &statement)
+	return byteValue
+}
 
-	jsonData, err := json.Marshal(statement)
+func Parse() BankStatements {
+	var statements BankStatements
+	var fileData []byte = readFile()
+
+	err := xml.Unmarshal(fileData, &statements)
 	if err != nil {
-		fmt.Println("Error marshalling JSON:", err)
-		return nil
+		fmt.Println("xml unmarshal error: ", err)
 	}
 
-	return jsonData
+	return statements
 }
