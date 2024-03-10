@@ -74,5 +74,4 @@ func main() {
 	router.GET("/getaccount/:accountId", getAccount)
 	router.GET("/listaccounts", listAccounts)
 	router.Run("localhost:" + PORT)
-
 }

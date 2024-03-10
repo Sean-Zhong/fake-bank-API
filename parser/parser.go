@@ -20,7 +20,7 @@ type Statement struct {
 }
 
 type Account struct {
-	AccountId int    `xml:"Id>Othr>Id"`
+	AccountId string `xml:"Id>Othr>Id"`
 	Currency  string `xml:"Ccy"`
 	Owner     string `xml:"Ownr>Nm"`
 }
