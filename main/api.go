@@ -1,15 +1,14 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"log"
+	"errors"
 	"net/http"
 
 	"github.com/Sean-Zhong/fake-bank-API/parser"
+	"github.com/gin-gonic/gin"
 )
 
-const PORT string = ":8081"
+const PORT string = "8081"
 
 var statements parser.BankStatements = parser.Parse()
 
@@ -18,60 +17,62 @@ type AccountDetails struct {
 	Balance []parser.Balance
 }
 
-func convertToJson(input interface{}) []byte {
-	var jsonData []byte
-	jsonData, err := json.Marshal(input)
-	if err != nil {
-		fmt.Println("Error marshalling JSON:", err)
-		return nil
-	}
-	return jsonData
-}
-
-func getStatementByAccountId(accountId int) parser.Statement {
-	var stmt parser.Statement
-	for _, elem := range statements.Statements {
-		if elem.AccountInfo.AccountId == accountId {
-			stmt = elem
-		}
-	}
-	return stmt
-}
-
-func listAccounts() []byte {
+func listAccounts(context *gin.Context) {
 	var accountList []parser.Account
 	for _, statement := range statements.Statements {
 		accountList = append(accountList, statement.AccountInfo)
 	}
-	return convertToJson(accountList)
+	context.IndentedJSON(http.StatusOK, accountList)
 }
 
-func getAccount(accountId int) []byte {
-	var stmt parser.Statement = getStatementByAccountId(accountId)
-	var accountData = AccountDetails{Account: stmt.AccountInfo, Balance: stmt.Balances}
-
-	// error handling needed
-	return convertToJson(accountData)
+func getAccountById(accountId string) (*AccountDetails, error) {
+	for _, stmt := range statements.Statements {
+		if stmt.AccountInfo.AccountId == accountId {
+			return &AccountDetails{Account: stmt.AccountInfo, Balance: stmt.Balances}, nil
+		}
+	}
+	return nil, errors.New("account not found")
 }
 
-func listTransactions(accountId int) []byte {
-	var stmt parser.Statement = getStatementByAccountId(accountId)
-	return convertToJson(stmt.Transactions)
+func getAccount(context *gin.Context) {
+	accountId := context.Param("accountId")
+	accountData, err := getAccountById(accountId)
+
+	if err != nil {
+		context.IndentedJSON(http.StatusNotFound, gin.H{"message": "Account not found"})
+		return
+	}
+
+	context.IndentedJSON(http.StatusOK, accountData)
 }
 
-func homePage(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Homepage endpoint Hit")
+func getStatementById(accountId string) (*parser.Statement, error) {
+	for _, stmt := range statements.Statements {
+		if stmt.AccountInfo.AccountId == accountId {
+			return &stmt, nil
+		}
+	}
+
+	return nil, errors.New("statement not found")
 }
 
-func handleRequests() {
-	http.HandleFunc("/", homePage)
-	log.Fatal(http.ListenAndServe(PORT, nil))
+func listTransactions(context *gin.Context) {
+	accountId := context.Param("accountId")
+	statement, err := getStatementById(accountId)
+
+	if err != nil {
+		context.IndentedJSON(http.StatusNotFound, gin.H{"message": "Account not found"})
+		return
+	}
+
+	context.IndentedJSON(http.StatusOK, statement.Transactions)
 }
 
 func main() {
-	fmt.Println(string(listAccounts()))
-	fmt.Println(string(getAccount(54400001111)))
-	fmt.Println(string(listTransactions(54400001111)))
-	fmt.Println(statements)
-	handleRequests()
+	router := gin.Default()
+	router.GET("/listtransactions/:accountId", listTransactions)
+	router.GET("/getaccount/:accountId", getAccount)
+	router.GET("/listaccounts", listAccounts)
+	router.Run("localhost:" + PORT)
+
 }
