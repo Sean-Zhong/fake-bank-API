@@ -79,6 +79,5 @@ func Parse() BankStatements {
 	if err != nil {
 		fmt.Println("xml unmarshal error: ", err)
 	}
-
 	return statements
 }

@@ -42,7 +42,6 @@ func getAccount(context *gin.Context) {
 		context.IndentedJSON(http.StatusNotFound, gin.H{"message": "Account not found"})
 		return
 	}
-
 	context.IndentedJSON(http.StatusOK, accountData)
 }
 
@@ -52,7 +51,6 @@ func getStatementById(accountId string) (*parser.Statement, error) {
 			return &stmt, nil
 		}
 	}
-
 	return nil, errors.New("statement not found")
 }
 
@@ -64,7 +62,6 @@ func listTransactions(context *gin.Context) {
 		context.IndentedJSON(http.StatusNotFound, gin.H{"message": "Account not found"})
 		return
 	}
-
 	context.IndentedJSON(http.StatusOK, statement.Transactions)
 }
 
